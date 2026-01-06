@@ -186,7 +186,7 @@
                 <div class="grid grid-cols-2 gap-8 pt-10 border-t border-border-soft mt-8">
                     <div>
                         <p class="font-mono text-[9px] uppercase tracking-widest text-ink/40 mb-2 font-bold">Delivery Estimate</p>
-                        <p id="delivery-date" class="font-sans text-xs font-bold text-ink">FEB 2026</p>
+                        <p id="delivery-date" class="font-sans text-xs font-bold text-ink">March 2026</p>
                     </div>
                     <div>
                         <p class="font-mono text-[9px] uppercase tracking-widest text-ink/40 mb-2 font-bold">Customer Contact</p>
@@ -222,6 +222,16 @@
             "10": { label: "Arrived Home", emoji: "🏠", progress: 100, description: "Delivered! Time for a cozy reading session." }
         };
 
+        // COLUMN MAPPINGS (0-indexed)
+        const COL_TIMESTAMP = 0;    // Column A
+        const COL_NAME = 2;         // Column C
+        const COL_RAW_GENRE = 12;   // Column M
+        const COL_PHONE = 15;       // Column P
+        const COL_STAGE_VALUE = 21; // Column V
+        const COL_EXPECTED_DATE = 22; // Column W
+        const COL_TRACK_ID = 26;    // Column AA
+        const COL_ORDER_STATUS = 28; // Column AC
+
         function trackOrder() {
             const inputId = document.getElementById('orderInput').value.trim();
             if (!inputId) return;
@@ -247,26 +257,26 @@
                     const rows = results.data;
                     let foundUser = null;
 
-                    // Column Indexing: Col Z is index 25
                     for (let i = 1; i < rows.length; i++) {
                         const row = rows[i];
-                        const trackIdInSheet = (row[25] || "").toString().trim();
-                        const orderStatus = (row[27] || "").toString().trim().toLowerCase();
+                        const trackIdInSheet = (row[COL_TRACK_ID] || "").toString().trim();
+                        const orderStatus = (row[COL_ORDER_STATUS] || "").toString().trim().toLowerCase();
                         
-                        // Valid if ID matches AND status is paid/created
+                        // Valid if ID matches AND status is created/paid
                         if (trackIdInSheet === inputId && (orderStatus === "created" || orderStatus === "paid")) {
-                            let stageValue = (row[23] || "").toString().trim();
+                            let stageValue = (row[COL_STAGE_VALUE] || "").toString().trim();
                             if (!stageValue) stageValue = "1";
 
-                            const timestamp = row[0] || "";
+                            const timestamp = row[COL_TIMESTAMP] || "";
                             
-                            let rawGenre = row[11] || "Curated";
-                            let cleanGenre = rawGenre.split('-')[0].replace("The", "").replace("Book Box", "").trim();
+                            let rawGenre = row[COL_RAW_GENRE] || "Curated";
+                            let cleanGenre = rawGenre.split('-')[0].replace("The", "").replace("Box", "").trim();
 
                             foundUser = {
                                 tracking_id: trackIdInSheet,
-                                name: row[2] || "Reader",
-                                phone: row[20] || "---",
+                                name: row[COL_NAME] || "Reader",
+                                phone: row[COL_PHONE] || "---",
+                                expectedDate: row[COL_EXPECTED_DATE] || "March 2026",
                                 genre: cleanGenre.toUpperCase(),
                                 orderDate: timestamp.split(' ')[0],
                                 stageNum: parseInt(stageValue)
@@ -299,6 +309,7 @@
             document.getElementById('order-id-label').innerText = `Order #${user.tracking_id}`;
             document.getElementById('genre-badge').innerText = `✨ ${user.genre}`;
             document.getElementById('user-phone').innerText = user.phone;
+            document.getElementById('delivery-date').innerText = user.expectedDate;
 
             const stageInfo = STAGE_MAP[user.stageNum] || STAGE_MAP["1"];
             document.getElementById('status-percent').innerText = `${stageInfo.progress}%`;
